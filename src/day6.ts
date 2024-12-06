@@ -1,6 +1,6 @@
 import { readFileSync } from "fs-extra";
 
-interface Position {
+export interface Position {
   row: number;
   col: number;
 }
