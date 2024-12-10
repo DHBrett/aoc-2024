@@ -9,20 +9,22 @@ let testData = "./data/day9-test.txt";
 const rawInput = readFileSync(debug ? testData : realData).toString();
 
 let filled = true;
-let memory: (number | ".")[] = [];
-let end = 0;
+let blocks: {
+  space: number;
+  content: number | undefined;
+  startIndex: number;
+}[] = [];
 let id = 0;
-for (let char of rawInput) {
-  const count = parseInt(char);
-  for (let i = 0; i < count; i++) {
-    if (filled) {
-      memory[i + end] = id;
-    } else {
-      memory[i + end] = ".";
-    }
-  }
 
-  end += count;
+let contentSoFar = 0;
+for (let i = 0; i < rawInput.length; i++) {
+  const count = parseInt(rawInput[i]);
+  if (filled) {
+    blocks.push({ space: count, content: id, startIndex: contentSoFar });
+  } else {
+    blocks.push({ space: count, content: undefined, startIndex: contentSoFar });
+  }
+  contentSoFar += count;
 
   if (filled) {
     id++;
@@ -30,27 +32,50 @@ for (let char of rawInput) {
   filled = !filled;
 }
 
-let left = 0;
-let right = memory.length - 1;
-while (true) {
-  // iterate left up until we find an empty space
-  while (memory[left] !== ".") {
-    left++;
+let memory: (number | "." | "X")[] = [];
+let end = 0;
+for (let block of blocks) {
+  for (let i = 0; i < block.space; i++) {
+    memory[i + end] = block.content ?? ".";
   }
+  end += block.space;
+}
 
-  // iterate right down until we find a value
-  while (memory[right] === ".") {
-    right--;
+const contentBlocks = blocks.filter((b) => b.content).reverse();
+for (let { startIndex, space, content } of contentBlocks) {
+  let emptyStart = 0;
+  for (let i = 0; i < startIndex; i++) {
+    if (memory[i] !== ".") {
+      emptyStart = i + 1;
+      continue;
+    }
+
+    // update the empty start if needed
+    emptyStart = Math.min(emptyStart, i);
+
+    // see if we can fit the block into the current space
+    if (i - emptyStart + 1 >= space) {
+      // put the block here
+      if (debug) {
+        console.log(
+          "Moving block " +
+            content +
+            " from " +
+            startIndex +
+            " to " +
+            emptyStart
+        );
+        console.log({ startIndex, space, content, emptyStart, i });
+      }
+      for (let j = 0; j < space; j++) {
+        memory[j + emptyStart] = content;
+        memory[j + startIndex] = ".";
+      }
+
+      // start on the next block
+      break;
+    }
   }
-
-  // check
-  if (left >= right) {
-    break;
-  }
-
-  // swap the values
-  memory[left] = memory[right];
-  memory[right] = ".";
 }
 
 if (debug) {
@@ -65,8 +90,8 @@ if (debug) {
 let checkSum = 0;
 for (let i = 0; i < memory.length; i++) {
   let m = memory[i];
-  if (m === ".") {
-    break;
+  if (m === "." || m === "X") {
+    continue;
   }
   checkSum += i * m;
 }
