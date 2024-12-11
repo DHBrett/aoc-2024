@@ -10,7 +10,7 @@ const rawInput = readFileSync(debug ? testData : realData).toString();
 
 class Node {
   children: Node[] = [];
-  #cachedPaths: undefined | Set<string>;
+  #cachedPaths: undefined | number;
 
   constructor(
     public elevation: number,
@@ -32,24 +32,25 @@ class Node {
     if (this.elevation === 9) {
       debug &&
         console.log(`Found ${this.elevation} at ${this.row}, ${this.col}`);
-      const key = this.row + "-" + this.col;
-      const simpleSet = new Set<string>();
-      simpleSet.add(key);
-      return simpleSet;
+      // const key = this.row + "-" + this.col;
+      // const simpleSet = new Set<string>();
+      // simpleSet.add(key);
+      return 1;
     }
 
-    let paths = new Set<string>();
+    // let paths = new Set<string>();
+    let paths = 0;
     for (let child of this.children) {
       const descendants = child.descendantPaths();
       debug && console.log({ descendants });
-      paths = new Set([...paths, ...descendants]);
+      paths += descendants;
     }
 
     debug &&
       console.log(
         `Checking paths for ${this.elevation} at ${this.row}, ${this.col}`
       );
-    debug && console.log(`Found ${paths.size} downstream from here`);
+    debug && console.log(`Found ${paths} downstream from here`);
     return paths;
   }
 }
@@ -116,7 +117,7 @@ let count = 0;
 starts.forEach((s) => {
   let newCount = s.descendantPaths();
   debug && console.log({ row: s.row, col: s.col, newCount });
-  count += newCount.size;
+  count += newCount;
 });
 
 console.log({ count });
