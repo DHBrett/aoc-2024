@@ -1,3 +1,5 @@
 node_modules
 storage
 /dist
+/data
+.DS_Store
