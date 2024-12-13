@@ -1,6 +1,6 @@
 import { readFileSync } from "fs-extra";
 
-let debug = true;
+let debug = false;
 
 let realData = "./data/day12.txt";
 let testData = "./data/day12-test.txt";
@@ -21,7 +21,13 @@ interface Plant {
   rightFence: boolean;
 }
 
+const isBorder = (p: Plant) =>
+  p.bottomFence || p.topFence || p.leftFence || p.rightFence;
+
+type Direction = "top" | "bottom" | "left" | "right";
+
 interface Fence {
+  direction: Direction;
   plants: Plant[];
 }
 
@@ -80,6 +86,7 @@ for (let row = 0; row < grid.length; row++) {
 
     while (frontier.length) {
       const next = frontier.pop();
+
       newRegion.push(next);
       next.outerEdges = 0;
       directions.forEach((d) => {
@@ -102,13 +109,6 @@ for (let row = 0; row < grid.length; row++) {
           next.outerEdges++;
           return;
         }
-
-        console.log({
-          nRow,
-          nCol,
-          gLength: grid.length,
-          gColLength: grid[0].length,
-        });
 
         const plant = grid[nRow][nCol];
         if (plant.plantId !== plantId) {
@@ -146,11 +146,34 @@ regions.forEach((r) => {
   debug && console.log(r[0].plantId);
   debug && console.log({ size: r.length });
 
-  // // find the outer edges
-  // let perimeterLength = 0;
-  r.forEach((p) => console.log({ p }));
-  // debug && console.log({ perimeterLength });
-  // total += r.length * perimeterLength;
+  const borders = r.filter((p) => isBorder(p));
+
+  const fences: Fence[] = [];
+  borders.forEach((b) => {
+    const directions: Direction[] = ["top", "bottom", "left", "right"];
+    directions.forEach((direction) => {
+      if (b[direction + "Fence"]) {
+        let newFence: Fence = { direction, plants: [] };
+
+        let frontier = [b];
+
+        while (frontier.length) {
+          const next = frontier.pop();
+          next[direction + "Fence"] = false;
+          newFence.plants.push(next);
+
+          next.sameNeighbors.forEach((n) => {
+            if (n[direction + "Fence"]) {
+              frontier.push(n);
+            }
+          });
+        }
+
+        fences.push(newFence);
+      }
+    });
+  });
+  total += fences.length * r.length;
 });
 
 console.log({ total });
