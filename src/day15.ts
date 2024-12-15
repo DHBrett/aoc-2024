@@ -13,7 +13,8 @@ const [rawBoard, rawMoves] = rawInput.split("\n\n");
 
 enum CellType {
   Wall = 0,
-  Box = 1,
+  LeftBox = 1,
+  RightBox = 3,
   Empty = 2, // also includes the cell with the robot
 }
 
@@ -28,8 +29,10 @@ const printBoard = (grid: CellType[][]) => {
           switch (c) {
             case CellType.Wall:
               return "#";
-            case CellType.Box:
-              return "O";
+            case CellType.LeftBox:
+              return "[";
+            case CellType.RightBox:
+              return "]";
             case CellType.Empty:
               return ".";
           }
@@ -46,18 +49,18 @@ const robot: Position = { row: 0, col: 0 };
 const boardLines = rawBoard.split("\n");
 for (let row = 0; row < boardLines.length; row++) {
   grid.push(
-    boardLines[row].split("").map((c, col) => {
+    boardLines[row].split("").flatMap((c, col) => {
       switch (c) {
         case "#":
-          return CellType.Wall;
+          return [CellType.Wall, CellType.Wall];
         case ".":
-          return CellType.Empty;
+          return [CellType.Empty, CellType.Empty];
         case "O":
-          return CellType.Box;
+          return [CellType.LeftBox, CellType.RightBox];
         case "@":
           robot.row = row;
-          robot.col = col;
-          return CellType.Empty;
+          robot.col = col * 2;
+          return [CellType.Empty, CellType.Empty];
         default:
           throw "invalid board char: " + c;
       }
@@ -126,18 +129,18 @@ for (let move of moves) {
       if (nextNextCell === CellType.Wall) {
         // no spaces to move to, give up
         break;
-      } else if (nextNextCell === CellType.Box) {
-        // just keep going, this box will be pushed if we find a space
-        // advance to the next one
-        nNRow = nNRow + move[0];
-        nNCol = nNCol + move[1];
+      // } else if (nextNextCell === CellType.Box) {
+      //   // just keep going, this box will be pushed if we find a space
+      //   // advance to the next one
+      //   nNRow = nNRow + move[0];
+      //   nNCol = nNCol + move[1];
       } else {
         // we have found an empty space
         // swap the first box we hit with this space
         robot.row = nRow;
         robot.col = nCol;
         grid[nRow][nCol] = CellType.Empty;
-        grid[nNRow][nNCol] = CellType.Box;
+        // grid[nNRow][nNCol] = CellType.Box;
         break;
       }
     }
@@ -145,3 +148,14 @@ for (let move of moves) {
 }
 
 printBoard(grid);
+
+let sum = 0;
+for (let row = 0; row < grid.length; row++) {
+  for (let col = 0; col < grid[0].length; col++) {
+    // if (grid[row][col] === CellType.Box) {
+    //   sum += 100 * row + col;
+    // }
+  }
+}
+
+console.log({ sum });
