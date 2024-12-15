@@ -86,5 +86,62 @@ const moves: Direction[] = rawMoves
     }
   });
 
-console.log({ moves });
-console.log(printBoard(grid));
+debug && printBoard(grid);
+
+const inBounds = ({ row, col }: Position) => {
+  if (row < 0 || col < 0 || row >= grid.length || col >= grid[0].length) {
+    return false;
+  }
+  return true;
+};
+
+for (let move of moves) {
+  const nRow = robot.row + move[0];
+  const nCol = robot.col + move[1];
+
+  if (!inBounds({ row: nRow, col: nCol })) {
+    continue;
+  }
+
+  // find the next cell
+  const nextCell = grid[nRow][nCol];
+  if (nextCell === CellType.Empty) {
+    // easy case, next cell is empty so just move the robot
+    robot.row = nRow;
+    robot.col = nCol;
+  } else if (nextCell === CellType.Wall) {
+    // can't advance at all
+    continue;
+  } else {
+    // we have hit a box - harder case, need to find the next empty space and swap if possible
+    let nNRow = nRow + move[0];
+    let nNCol = nCol + move[1];
+    while (true) {
+      if (!inBounds({ row: nNRow, col: nNCol })) {
+        // no spaces to move to, give up
+        break;
+      }
+
+      const nextNextCell = grid[nNRow][nNCol];
+      if (nextNextCell === CellType.Wall) {
+        // no spaces to move to, give up
+        break;
+      } else if (nextNextCell === CellType.Box) {
+        // just keep going, this box will be pushed if we find a space
+        // advance to the next one
+        nNRow = nNRow + move[0];
+        nNCol = nNCol + move[1];
+      } else {
+        // we have found an empty space
+        // swap the first box we hit with this space
+        robot.row = nRow;
+        robot.col = nCol;
+        grid[nRow][nCol] = CellType.Empty;
+        grid[nNRow][nNCol] = CellType.Box;
+        break;
+      }
+    }
+  }
+}
+
+printBoard(grid);
